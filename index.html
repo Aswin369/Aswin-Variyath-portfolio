@@ -784,8 +784,10 @@
           </div>
 
           <div class="col-lg-7">
-            <form id="submit-form" action=""  class="php-email-form" data-aos="fade-up" data-aos-delay="200">
+            <form id="submit-form" action="https://api.web3forms.com/submit" method="post"  class="php-email-form" data-aos="fade-up" data-aos-delay="200">
               <div class="row gy-4">
+
+                <input type="hidden" name="access_key" value="8d093ecc-1fe3-427f-aa38-e1ccb8ba8039">
 
                 <div class="col-md-6">
                   <label for="name-field" class="pb-2">Your Name</label>
@@ -808,11 +810,8 @@
                 </div>
 
                 <div class="col-md-12 text-center">
-                  <div class="loading">Loading</div>
-                  <div class="error-message"></div>
-                  <div class="sent-message">Your message has been sent. Thank you!</div>
-
                   <button type="submit">Send Message</button>
+                  <div id="result"></div>
                 </div>
 
               </div>
@@ -872,24 +871,81 @@
   <script src="assets/js/main.js"></script>
 
   <script>
-    $("#submit-form").submit((e)=>{
-        e.preventDefault()
-        $.ajax({
-            url:"https://script.google.com/macros/s/AKfycbwCR34_NqZ9EZdBU3BY0OdsQL0VKoxFTERGYe_goOjvOD1gCjkxb1NVrGhLVDGsz_NC4g/exec",
-            data:$("#submit-form").serialize(),
-            method:"post",
-            success:function (response){
-                // alert("Form submitted successfully")
-                window.location.reload()
-                //window.location.href="https://google.com"
-            },
-            error:function (err){
-                alert("Something Error")
+    const form = document.getElementById('submit-form');
+    const result = document.getElementById('result');
+    
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
 
-            }
-        })
-    })
-</script>
+
+      const form = e.target;
+      const formData = new FormData(form);
+      
+
+
+      
+    
+    // Check for form validity
+    if (!form.checkValidity()) {
+     result.innerHTML = "Please fill out all required fields correctly!";
+     return;
+     
+    }
+    
+    const name = form.querySelector('#name-field').value.trim();
+    const email = form.querySelector('#email-field').value.trim();
+    const message = form.querySelector('#message-field').value.trim();
+   
+   
+    if (!name.match(/^[A-Za-z ]+$/)) {
+        result.innerHTML = 'Name should contain only letters and spaces.';
+        return;
+    }
+   
+    if (!email.match(/^([a-zA-Z0-9_]+)@([a-zA-Z0-9]+)\.([a-zA-Z]+)(.[a-zA-Z]+)?$/)) {
+           result.innerHTML = "Email should be correctly entered";
+           return;
+       }
+       if (message.length < 10) {
+           result.innerHTML = "Message should be at least 10 characters long.";
+           return;
+       }
+
+
+      const object = Object.fromEntries(formData);
+      const json = JSON.stringify(object);
+      result.innerHTML = "Please wait..."
+    
+        fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: json
+            })
+            .then(async (response) => {
+                let json = await response.json();
+                if (response.status == 200) {
+                    result.innerHTML = "Form submitted successfully";
+                } else {
+                    console.log(response);
+                    result.innerHTML = json.message;
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                result.innerHTML = "Something went wrong!";
+            })
+            .then(function() {
+                form.reset();
+                setTimeout(() => {
+                    result.style.display = "none";
+                }, 3000);
+            });
+    });
+    </script>
+    
 
 </body>
 
